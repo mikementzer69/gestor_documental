@@ -228,6 +228,15 @@
                                     </span>
                                 @endif
                             </div>
+                            
+                            <div class="mt-3 pt-3 border-t border-gray-50 flex gap-2">
+                                <button onclick="openPreviewModal('{{ route('filemanager.preview', $doc->id) }}', '{{ $doc->renamed_title ?? $doc->title }}')" class="flex-1 text-center bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-100 py-1.5 rounded-lg text-xs font-bold transition shadow-sm flex justify-center items-center gap-1 cursor-pointer">
+                                    <i class="fas fa-eye"></i> Previsualizar
+                                </button>
+                                <a href="{{ route('filemanager.preview', $doc->id) }}" download="{{ $doc->renamed_title ?? $doc->title }}" class="bg-gray-50 hover:bg-gray-100 text-gray-600 border border-gray-200 px-3 py-1.5 rounded-lg text-xs font-bold transition shadow-sm flex justify-center items-center">
+                                    <i class="fas fa-download"></i>
+                                </a>
+                            </div>
                         </div>
                     @endforeach
                 </div>
@@ -236,5 +245,85 @@
 
     </div>
 
+    <!-- Modal de Previsualización -->
+    <div id="previewModal" class="fixed inset-0 z-50 hidden bg-gray-900 bg-opacity-75 backdrop-blur-sm flex items-center justify-center p-4 transition-opacity">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-5xl h-[85vh] flex flex-col overflow-hidden transform transition-all scale-100">
+            <!-- Header -->
+            <div class="flex justify-between items-center bg-gray-50 border-b border-gray-200 px-6 py-4">
+                <div class="flex items-center gap-3">
+                    <div class="bg-red-100 text-red-500 p-2 rounded-lg">
+                        <i class="fas fa-file-pdf text-xl"></i>
+                    </div>
+                    <h3 id="previewTitle" class="text-lg font-bold text-gray-800 truncate max-w-2xl">Cargando Documento...</h3>
+                </div>
+                <div class="flex gap-2">
+                    <a id="previewDownloadBtn" href="#" download class="text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 p-2 rounded-lg transition-colors cursor-pointer" title="Descargar PDF">
+                        <i class="fas fa-download text-xl"></i>
+                    </a>
+                    <button onclick="closePreviewModal()" class="text-gray-500 hover:text-red-500 hover:bg-red-50 p-2 rounded-lg transition-colors cursor-pointer" title="Cerrar">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+            </div>
+            <!-- Contenido del PDF -->
+            <div class="flex-1 bg-gray-100 relative">
+                <!-- Loader -->
+                <div id="previewLoader" class="absolute inset-0 flex flex-col items-center justify-center">
+                    <i class="fas fa-circle-notch fa-spin text-4xl text-indigo-500 mb-3"></i>
+                    <p class="text-gray-500 text-sm font-medium">Cargando documento seguro...</p>
+                </div>
+                <iframe id="previewIframe" class="w-full h-full relative z-10 hidden" src="" onload="document.getElementById('previewLoader').classList.add('hidden'); this.classList.remove('hidden');" frameborder="0" allowfullscreen></iframe>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function openPreviewModal(url, title) {
+            document.getElementById('previewTitle').innerText = title;
+            document.getElementById('previewIframe').src = url + '#toolbar=0'; // Agregamos toolbar=0 para esconder la barra por defecto si es posible
+            document.getElementById('previewDownloadBtn').href = url;
+            document.getElementById('previewIframe').classList.add('hidden');
+            document.getElementById('previewLoader').classList.remove('hidden');
+            
+            const modal = document.getElementById('previewModal');
+            modal.classList.remove('hidden');
+            
+            // Animación suave de aparición
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+            }, 10);
+            
+            // Evitar scroll en el body
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closePreviewModal() {
+            const modal = document.getElementById('previewModal');
+            modal.classList.add('hidden');
+            modal.classList.add('opacity-0');
+            
+            // Limpiar iframe para detener la carga
+            setTimeout(() => {
+                document.getElementById('previewIframe').src = '';
+            }, 200);
+            
+            // Restaurar scroll
+            document.body.style.overflow = 'auto';
+        }
+        
+        // Cerrar al hacer clic fuera del contenido del modal
+        document.getElementById('previewModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closePreviewModal();
+            }
+        });
+        
+        // Cerrar con la tecla ESC
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && !document.getElementById('previewModal').classList.contains('hidden')) {
+                closePreviewModal();
+            }
+        });
+    </script>
 </body>
 </html>

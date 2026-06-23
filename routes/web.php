@@ -15,3 +15,4 @@ Route::get('/files', [FileManagerController::class, 'index'])->name('filemanager
 Route::get('/files/folder/{folderId}', [FileManagerController::class, 'index'])->name('filemanager.folder');
 Route::post('/folders/create', [App\Http\Controllers\FileManagerController::class, 'storeFolder'])->name('folders.store');
 Route::post('/files/upload', [FileManagerController::class, 'upload'])->name('filemanager.upload');
+Route::get('/files/preview/{id}', [FileManagerController::class, 'preview'])->name('filemanager.preview');

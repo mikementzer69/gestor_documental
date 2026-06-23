@@ -116,4 +116,19 @@ class FileManagerController extends Controller
 
         return back()->with('success', '¡Documento clasificado, leído por la IA y subido a Drive!');
     }
+
+    public function preview($id)
+    {
+        $document = Document::findOrFail($id);
+
+        try {
+            $file = \Illuminate\Support\Facades\Storage::disk('google')->get($document->file_path);
+
+            return response($file, 200)
+                ->header('Content-Type', 'application/pdf')
+                ->header('Content-Disposition', 'inline; filename="' . $document->renamed_title . '"');
+        } catch (\Exception $e) {
+            return back()->withErrors(['Error al obtener el documento de Google Drive: ' . $e->getMessage()]);
+        }
+    }
 }
