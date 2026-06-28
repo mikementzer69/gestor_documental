@@ -20,6 +20,24 @@
             </div>
         @endif
 
+        <!-- Menú de Usuario y Bitácora -->
+        <div class="flex justify-end items-center mb-6 gap-3">
+            <a href="{{ route('reports.index') }}" class="bg-blue-50 border border-blue-200 text-blue-700 hover:bg-blue-100 px-4 py-2 rounded-lg text-xs font-bold transition flex items-center shadow-sm">
+                <i class="fas fa-chart-bar mr-2"></i> Ver Reportes
+            </a>
+            
+            <a href="{{ route('logs.index') }}" class="bg-indigo-50 border border-indigo-200 text-indigo-700 hover:bg-indigo-100 px-4 py-2 rounded-lg text-xs font-bold transition flex items-center shadow-sm">
+                <i class="fas fa-history mr-2"></i> Ver Bitácora
+            </a>
+            
+            <form method="POST" action="{{ route('logout') }}">
+                @csrf
+                <button type="submit" class="bg-white border border-gray-200 text-gray-600 hover:bg-red-50 hover:text-red-600 hover:border-red-200 px-4 py-2 rounded-lg text-xs font-bold transition flex items-center shadow-sm cursor-pointer">
+                    <i class="fas fa-sign-out-alt mr-2"></i> Cerrar Sesión
+                </button>
+            </form>
+        </div>
+
         @if($errors->any())
             <div class="mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg shadow-sm">
                 <div class="flex items-center mb-2">
@@ -167,9 +185,13 @@
                                 </span>
                             </a>
 
-                            <button class="text-gray-400 hover:text-gray-600 absolute right-3 top-4 px-1" title="Opciones">
-                                <i class="fas fa-ellipsis-v text-xs"></i>
-                            </button>
+                            <form action="{{ route('filemanager.deleteFolder', $folder->id) }}" method="POST" class="absolute right-3 top-4" onsubmit="return confirm('⚠️ ¿Estás seguro de eliminar esta carpeta y TODOS los documentos dentro de ella? Esta acción no se puede deshacer.');">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="text-gray-400 hover:text-red-500 px-1 transition cursor-pointer" title="Eliminar Carpeta">
+                                    <i class="fas fa-trash-alt text-xs"></i>
+                                </button>
+                            </form>
                         </div>
                     @endforeach
                 </div>
@@ -236,6 +258,13 @@
                                 <a href="{{ route('filemanager.preview', $doc->id) }}" download="{{ $doc->renamed_title ?? $doc->title }}" class="bg-gray-50 hover:bg-gray-100 text-gray-600 border border-gray-200 px-3 py-1.5 rounded-lg text-xs font-bold transition shadow-sm flex justify-center items-center">
                                     <i class="fas fa-download"></i>
                                 </a>
+                                <form action="{{ route('filemanager.deleteFile', $doc->id) }}" method="POST" class="flex" onsubmit="return confirm('¿Seguro que deseas eliminar este documento permanentemente?');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 px-3 py-1.5 rounded-lg text-xs font-bold transition shadow-sm flex justify-center items-center cursor-pointer">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                </form>
                             </div>
                         </div>
                     @endforeach

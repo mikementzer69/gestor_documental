@@ -8,6 +8,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
 use Smalot\PdfParser\Parser; // <-- La librería mágica instalada
+use App\Models\ActivityLog;
+use Illuminate\Support\Facades\Auth;
 
 class FileManagerController extends Controller
 {
@@ -60,8 +62,14 @@ class FileManagerController extends Controller
             'name' => 'required|string|max:255',
         ]);
 
-        Folder::create([
+        $folder = Folder::create([
             'name' => $request->name,
+        ]);
+
+        ActivityLog::create([
+            'user_id' => Auth::id(),
+            'action' => 'CREATE_FOLDER',
+            'description' => "Creó la carpeta: {$folder->name}",
         ]);
 
         return back()->with('success', 'Carpeta creada exitosamente.');
@@ -103,7 +111,7 @@ class FileManagerController extends Controller
         $path = $file->storeAs($folderName, $standardName, 'google');
 
         // Guardamos todo indexado
-        Document::create([
+        $newDocument = Document::create([
             'folder_id' => $request->folder_id,
             'title' => $originalName,
             'renamed_title' => $standardName,
@@ -112,6 +120,12 @@ class FileManagerController extends Controller
             'entity_name' => $request->entity_name,
             'expiry_date' => $request->expiry_date,
             'content' => $extractedText, // <-- Guardamos el texto extraído
+        ]);
+
+        ActivityLog::create([
+            'user_id' => Auth::id(),
+            'action' => 'UPLOAD',
+            'description' => "Subió el documento: {$originalName} (Clasificado como: {$standardName})",
         ]);
 
         return back()->with('success', '¡Documento clasificado, leído por la IA y subido a Drive!');
@@ -129,6 +143,59 @@ class FileManagerController extends Controller
                 ->header('Content-Disposition', 'inline; filename="' . $document->renamed_title . '"');
         } catch (\Exception $e) {
             return back()->withErrors(['Error al obtener el documento de Google Drive: ' . $e->getMessage()]);
+        }
+    }
+
+    public function deleteFile($id)
+    {
+        $document = Document::findOrFail($id);
+
+        try {
+            // Eliminar de Google Drive
+            \Illuminate\Support\Facades\Storage::disk('google')->delete($document->file_path);
+            
+            // Eliminar de la BD
+            $document->delete();
+
+            ActivityLog::create([
+                'user_id' => Auth::id(),
+                'action' => 'DELETE_FILE',
+                'description' => "Eliminó el documento: {$document->renamed_title}",
+            ]);
+
+            return back()->with('success', 'Documento eliminado exitosamente.');
+        } catch (\Exception $e) {
+            return back()->withErrors(['Error al eliminar el documento: ' . $e->getMessage()]);
+        }
+    }
+
+    public function deleteFolder($id)
+    {
+        $folder = Folder::findOrFail($id);
+
+        try {
+            // Encontrar todos los documentos dentro de esta carpeta
+            $documents = Document::where('folder_id', $folder->id)->get();
+
+            // Eliminar físicamente los documentos de Google Drive (opcionalmente podríamos intentar borrar el directorio entero)
+            foreach ($documents as $document) {
+                \Illuminate\Support\Facades\Storage::disk('google')->delete($document->file_path);
+                $document->delete();
+            }
+
+            // Eliminar la carpeta de la base de datos
+            $folderName = $folder->name;
+            $folder->delete();
+
+            ActivityLog::create([
+                'user_id' => Auth::id(),
+                'action' => 'DELETE_FOLDER',
+                'description' => "Eliminó la carpeta: {$folderName} y todo su contenido",
+            ]);
+
+            return back()->with('success', 'Carpeta y todo su contenido eliminados exitosamente.');
+        } catch (\Exception $e) {
+            return back()->withErrors(['Error al eliminar la carpeta: ' . $e->getMessage()]);
         }
     }
 }
