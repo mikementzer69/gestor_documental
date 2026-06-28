@@ -3,13 +3,15 @@ services:
   gestor.test:
     image: webdevops/php-apache:8.2
     ports:
-      - '8081:80'  # Cambiado a 8081 para que no choque con rentcar
+      - '8081:80'
     environment:
       - WEB_DOCUMENT_ROOT=/app/public
+    volumes:
+      - ./:/app  # ¡ESTO FALTÓ! Conecta tu código de GitHub con el contenedor
   gestor-mysql:
     image: 'mysql/mysql-server:8.0'
     ports:
-      - '3307:3306' # Cambiado a 3307 para que no choque con rentcar
+      - '3307:3306'
     environment:
       - MYSQL_ROOT_PASSWORD=gestordoc_pwd
       - MYSQL_DATABASE=gestor_documental
