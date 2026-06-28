@@ -7,7 +7,7 @@ services:
     environment:
       - WEB_DOCUMENT_ROOT=/app/public
     volumes:
-      - ./:/app  # ¡ESTO FALTÓ! Conecta tu código de GitHub con el contenedor
+      - ./:/app
   gestor-mysql:
     image: 'mysql/mysql-server:8.0'
     ports:
