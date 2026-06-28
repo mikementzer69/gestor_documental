@@ -1,0 +1,15 @@
+version: '3.8'
+services:
+  gestor.test:
+    image: webdevops/php-apache:8.2
+    ports:
+      - '8081:80'  # Cambiado a 8081 para que no choque con rentcar
+    environment:
+      - WEB_DOCUMENT_ROOT=/app/public
+  gestor-mysql:
+    image: 'mysql/mysql-server:8.0'
+    ports:
+      - '3307:3306' # Cambiado a 3307 para que no choque con rentcar
+    environment:
+      - MYSQL_ROOT_PASSWORD=gestordoc_pwd
+      - MYSQL_DATABASE=gestor_documental
