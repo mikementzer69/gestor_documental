@@ -3,7 +3,7 @@ services:
   gestor.test:
     image: webdevops/php-apache:8.2
     ports:
-      - '8081:80'
+      - '8082:80'
     environment:
       - WEB_DOCUMENT_ROOT=/app/public
     volumes:
