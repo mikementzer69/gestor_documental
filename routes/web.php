@@ -4,7 +4,7 @@ use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return view('welcome');
+    return redirect()->route('login');
 });
 
 Route::get('/dashboard', function () {
@@ -20,6 +20,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/files', [\App\Http\Controllers\FileManagerController::class, 'index'])->name('filemanager.index');
     Route::get('/files/folder/{folderId}', [\App\Http\Controllers\FileManagerController::class, 'index'])->name('filemanager.folder');
     Route::post('/folders/create', [\App\Http\Controllers\FileManagerController::class, 'storeFolder'])->name('folders.store');
+    Route::post('/folders/scan', [\App\Http\Controllers\FileManagerController::class, 'scanDrive'])->name('folders.scan');
     Route::post('/files/upload', [\App\Http\Controllers\FileManagerController::class, 'upload'])->name('filemanager.upload');
     Route::get('/files/preview/{id}', [\App\Http\Controllers\FileManagerController::class, 'preview'])->name('filemanager.preview');
     
@@ -32,6 +33,11 @@ Route::middleware('auth')->group(function () {
     
     // Reportes
     Route::get('/reports', [\App\Http\Controllers\ReportController::class, 'index'])->name('reports.index');
+    
+    // Mantenimiento de Carpetas
+    Route::get('/folders/maintenance', [\App\Http\Controllers\FolderMaintenanceController::class, 'index'])->name('folders.maintenance');
+    Route::get('/folders/maintenance/report', [\App\Http\Controllers\FolderMaintenanceController::class, 'report'])->name('folders.report');
+    Route::put('/folders/maintenance/{id}', [\App\Http\Controllers\FolderMaintenanceController::class, 'update'])->name('folders.update');
 });
 
 require __DIR__.'/auth.php';

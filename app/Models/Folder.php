@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Folder extends Model
 {
     // Los campos que permitimos guardar en la base de datos
-    protected $fillable = ['name', 'slug', 'parent_id', 'drive_id'];
+    protected $fillable = ['name', 'slug', 'parent_id', 'drive_id', 'descripcion'];
 
     // 1. Para saber quién es la carpeta "Padre"
     public function parent()
@@ -25,5 +25,19 @@ class Folder extends Model
     public function documents()
     {
         return $this->hasMany(Document::class);
+    }
+
+    // 4. Obtener la ruta completa para Google Drive
+    public function getFullPathAttribute()
+    {
+        $path = $this->name;
+        $parent = $this->parent;
+        
+        while ($parent) {
+            $path = $parent->name . '/' . $path;
+            $parent = $parent->parent;
+        }
+        
+        return $path;
     }
 }

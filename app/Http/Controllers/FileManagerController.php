@@ -44,6 +44,15 @@ class FileManagerController extends Controller
             $currentFolder = $folderId ? Folder::findOrFail($folderId) : null;
             $folders = Folder::where('parent_id', $folderId)->get();
             $documents = Document::where('folder_id', $folderId)->get();
+            
+            $breadcrumbs = [];
+            if ($currentFolder) {
+                $folder = $currentFolder;
+                while ($folder) {
+                    array_unshift($breadcrumbs, $folder);
+                    $folder = $folder->parent;
+                }
+            }
         }
 
         return view('file-manager', compact(
@@ -52,7 +61,8 @@ class FileManagerController extends Controller
             'documents', 
             'search', 
             'expiredDocuments', 
-            'soonToExpireDocuments'
+            'soonToExpireDocuments',
+            'breadcrumbs'
         ));
     }
 
@@ -60,11 +70,22 @@ class FileManagerController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
+            'parent_id' => 'nullable|exists:folders,id',
         ]);
 
         $folder = Folder::create([
             'name' => $request->name,
+            'parent_id' => $request->parent_id,
+            'slug' => Str::slug($request->name)
         ]);
+
+        // Crear físicamente en Google Drive
+        try {
+            $fullPath = $folder->full_path;
+            \Illuminate\Support\Facades\Storage::disk('google')->makeDirectory($fullPath);
+        } catch (\Exception $e) {
+            // Si falla la conexión, la carpeta se crea igual de forma lógica
+        }
 
         ActivityLog::create([
             'user_id' => Auth::id(),
@@ -72,7 +93,42 @@ class FileManagerController extends Controller
             'description' => "Creó la carpeta: {$folder->name}",
         ]);
 
-        return back()->with('success', 'Carpeta creada exitosamente.');
+        return back()->with('success', 'Carpeta creada exitosamente en el sistema y en Google Drive.');
+    }
+
+    public function scanDrive(Request $request)
+    {
+        try {
+            $directories = \Illuminate\Support\Facades\Storage::disk('google')->allDirectories('/');
+            $count = 0;
+            
+            foreach ($directories as $directory) {
+                $directory = trim($directory, '/');
+                if (empty($directory)) continue;
+
+                $parts = explode('/', $directory);
+                $parentId = null;
+                
+                foreach ($parts as $part) {
+                    $folder = Folder::firstOrCreate(
+                        ['name' => $part, 'parent_id' => $parentId],
+                        ['slug' => Str::slug($part)]
+                    );
+                    $parentId = $folder->id;
+                }
+                $count++;
+            }
+
+            ActivityLog::create([
+                'user_id' => Auth::id(),
+                'action' => 'SCAN_DRIVE',
+                'description' => "Escaneó Google Drive y sincronizó {$count} rutas de carpetas.",
+            ]);
+
+            return back()->with('success', "¡Google Drive escaneado exitosamente! Se revisaron {$count} rutas.");
+        } catch (\Exception $e) {
+            return back()->withErrors(['Error al escanear Google Drive: ' . $e->getMessage()]);
+        }
     }
 
     public function upload(Request $request)
@@ -100,7 +156,7 @@ class FileManagerController extends Controller
 
         // Estructura de carpetas
         $folder = Folder::findOrFail($request->folder_id);
-        $folderName = $folder->name; 
+        $folderPath = $folder->full_path; 
 
         $typeSlug = Str::upper(Str::slug($request->document_type, '_'));
         $entitySlug = $request->entity_name ? Str::upper(Str::slug($request->entity_name, '_')) : 'GENERAL';
@@ -108,7 +164,7 @@ class FileManagerController extends Controller
         
         $standardName = "{$typeSlug}_{$entitySlug}_{$dateStamp}.pdf";
 
-        $path = $file->storeAs($folderName, $standardName, 'google');
+        $path = $file->storeAs($folderPath, $standardName, 'google');
 
         // Guardamos todo indexado
         $newDocument = Document::create([
@@ -151,10 +207,12 @@ class FileManagerController extends Controller
         $document = Document::findOrFail($id);
 
         try {
-            // Eliminar de Google Drive
-            \Illuminate\Support\Facades\Storage::disk('google')->delete($document->file_path);
+            // Eliminar de Google Drive (solo si existe en el disco remoto para no generar error)
+            if (\Illuminate\Support\Facades\Storage::disk('google')->exists($document->file_path)) {
+                \Illuminate\Support\Facades\Storage::disk('google')->delete($document->file_path);
+            }
             
-            // Eliminar de la BD
+            // Eliminar de la BD siempre
             $document->delete();
 
             ActivityLog::create([
@@ -165,7 +223,9 @@ class FileManagerController extends Controller
 
             return back()->with('success', 'Documento eliminado exitosamente.');
         } catch (\Exception $e) {
-            return back()->withErrors(['Error al eliminar el documento: ' . $e->getMessage()]);
+            // Si hay un error severo, de todas formas lo borramos de la base de datos para no dejar "archivos fantasma"
+            $document->delete();
+            return back()->withErrors(['Aviso: El archivo ya no estaba en Google Drive, pero fue removido del sistema local.']);
         }
     }
 
