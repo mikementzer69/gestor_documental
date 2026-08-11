@@ -163,7 +163,7 @@
                         <form action="{{ route('folders.scan') }}" method="POST">
                             @csrf
                             <button type="submit" onclick="return confirm('¿Desea traer toda la magia desde Google Drive?')" class="btn-gradient-blue px-4 py-2.5 rounded-xl text-xs font-bold transition whitespace-nowrap">
-                                <i class="fab fa-google-drive mr-1 text-base"></i> Sincronizar
+                                <i class="fab fa-google-drive mr-1 text-base"></i> Escanear Drive
                             </button>
                         </form>
 

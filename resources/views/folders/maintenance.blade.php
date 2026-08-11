@@ -19,7 +19,14 @@
                         </div>
                     @endif
 
-                    <div class="flex justify-end mb-6">
+                    <div class="flex justify-end mb-6 gap-3">
+                        <form action="{{ route('folders.scan') }}" method="POST">
+                            @csrf
+                            <button type="submit" onclick="return confirm('¿Desea escanear y sincronizar las carpetas desde Google Drive?')" class="inline-flex items-center px-5 py-2.5 border border-transparent rounded-full font-bold text-xs text-white uppercase tracking-wider transition ease-in-out duration-150" style="background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 4px 14px 0 rgba(16, 185, 129, 0.39);">
+                                <i class="fab fa-google-drive mr-2"></i> Escanear Drive
+                            </button>
+                        </form>
+
                         <a href="{{ route('folders.report') }}" target="_blank" class="inline-flex items-center px-5 py-2.5 border border-transparent rounded-full font-bold text-xs text-white uppercase tracking-wider transition ease-in-out duration-150" style="background: linear-gradient(135deg, #0ea5e9, #3b82f6); box-shadow: 0 4px 14px 0 rgba(59, 130, 246, 0.39);">
                             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
                             Generar Reporte
