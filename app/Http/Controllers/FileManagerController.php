@@ -29,6 +29,8 @@ class FileManagerController extends Controller
         // Lógica del Buscador Inteligente
         $search = $request->input('q');
 
+        $breadcrumbs = [];
+
         if ($search) {
             $currentFolder = null;
             $folders = collect(); 
@@ -45,7 +47,6 @@ class FileManagerController extends Controller
             $folders = Folder::where('parent_id', $folderId)->get();
             $documents = Document::where('folder_id', $folderId)->get();
             
-            $breadcrumbs = [];
             if ($currentFolder) {
                 $folder = $currentFolder;
                 while ($folder) {
