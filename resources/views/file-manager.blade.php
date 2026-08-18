@@ -167,13 +167,16 @@
                             </button>
                         </form>
 
-                        <form action="{{ route('folders.store') }}" method="POST" class="flex items-center gap-2 w-full sm:w-auto">
+                        <form action="{{ route('folders.store') }}" method="POST" class="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
                             @csrf
                             @if(isset($currentFolder) && $currentFolder)
                                 <input type="hidden" name="parent_id" value="{{ $currentFolder->id }}">
                             @endif
                             <input type="text" name="name" placeholder="Ej. 2027" required
                                    class="w-full sm:w-32 md:w-auto text-sm text-gray-700 border-2 border-gray-100 rounded-xl py-2 px-3 focus:outline-none focus:border-purple-300 focus:ring-2 focus:ring-purple-100">
+                            
+                            <input type="text" name="descripcion" placeholder="Descripción de la carpeta" required
+                                   class="w-full sm:w-48 md:w-auto text-sm text-gray-700 border-2 border-gray-100 rounded-xl py-2 px-3 focus:outline-none focus:border-purple-300 focus:ring-2 focus:ring-purple-100">
                             
                             <button type="submit" class="btn-gradient-dark px-4 py-2.5 rounded-xl text-xs font-bold transition whitespace-nowrap cursor-pointer">
                                 <i class="fas fa-plus mr-1"></i> Crear

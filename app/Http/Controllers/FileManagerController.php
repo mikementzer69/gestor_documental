@@ -70,11 +70,13 @@ class FileManagerController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
+            'descripcion' => 'required|string|max:255',
             'parent_id' => 'nullable|exists:folders,id',
         ]);
 
         $folder = Folder::create([
             'name' => $request->name,
+            'descripcion' => $request->descripcion,
             'parent_id' => $request->parent_id,
             'slug' => Str::slug($request->name)
         ]);
@@ -112,7 +114,7 @@ class FileManagerController extends Controller
                 foreach ($parts as $part) {
                     $folder = Folder::firstOrCreate(
                         ['name' => $part, 'parent_id' => $parentId],
-                        ['slug' => Str::slug($part)]
+                        ['slug' => Str::slug($part), 'descripcion' => 'Carpeta sincronizada desde Google Drive']
                     );
                     $parentId = $folder->id;
                 }
